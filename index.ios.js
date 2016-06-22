@@ -12,32 +12,40 @@ class Running extends Component {
     super()
     let watchID = null
     this.state = {
-      currentPosition: [],
+      info: null,
+      startPosition: null,
       footprintCoords: []
     }
   }
   componentWillMount(){
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const {latitude,longitude} = position.coords
-        const coord = {latitude: latitude-0.0028, longitude: longitude+0.00505}
-        console.log(coord);
-        this.setState({...this.state, currentPosition: [coord]})
+        if(position.coords.accuracy > 30){
+          alert("GPS 信号不好")
+        }
       },
       (error) => alert(error.message),
       {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000}
     )
     this.watchID = navigator.geolocation.watchPosition((position) => {
-        const lastPosition = JSON.stringify(position)
-        const {latitude,longitude} = position.coords
-        const coord = {latitude: latitude-0.0028, longitude: longitude+0.00505}
+        const {latitude,longitude,accuracy} = position.coords
+        this.setState({...this.state, info: position.coords})
+        const coord = {latitude: latitude-0.002716, longitude: longitude+0.005055}
         const footprintCoords = this.state.footprintCoords.concat([coord])
-        this.setState({...this.state,footprintCoords})
+        const startPosition = [footprintCoords[0]]
+        this.setState({...this.state,startPosition,footprintCoords})
       },
       (error) => alert(error.message),
-      {enableHighAccuracy: true, timeout: 2000, maximumAge: 1000, distanceFilter: 35}
+      {enableHighAccuracy: true, timeout: 2000, maximumAge: 1000, distanceFilter: 10}
     )
   }
+
+  // _distance(coords){
+  //   let distance = 0
+  //   for(let i=0;i<coords.length-1,i++){
+  //     distance += (coords[i],coords[i+1])
+  //   }
+  // }
   render() {
         return (
           <View style={styles.container}>
@@ -45,7 +53,7 @@ class Running extends Component {
                 showsUserLocation={true}
                 followUserLocation={true}
                 style={styles.map}
-                annotations={this.state.currentPosition}
+                annotations={this.state.startPosition}
                 overlays={[{
                     coordinates: this.state.footprintCoords,
                     strokeColor: ['#f007'],
@@ -54,7 +62,7 @@ class Running extends Component {
               />
               <View style={styles.detail}>
                 <Text>
-                  {JSON.stringify(this.state.currentPosition)}
+                  {JSON.stringify(this.state.info)}
                 </Text>
               </View>
           </View>
